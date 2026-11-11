@@ -1,0 +1,96 @@
+{
+  "metadata": {
+    "episodes_per_buyer": 5,
+    "buyer_types": [
+      "cooperative",
+      "stingy",
+      "sensitive"
+    ],
+    "n_replies": 5,
+    "n_prices": 5,
+    "fallback_note": "gpt2_fallback means GPT-2 generated no usable text after bounded retries; these actions are NOT GPT-2 outputs",
+    "note": "Hand-coded buyer simulator; NOT CHAI paper Table 1"
+  },
+  "policies": {
+    "rule": {
+      "deal_success_rate": 0.6666666666666666,
+      "avg_normalized_revenue_all": 0.5433333333333333,
+      "avg_price_on_success": 829.3439999999998,
+      "avg_seller_reward": -1.2333333333333338,
+      "avg_turns": 2.3333333333333335,
+      "fallback_seller_turns": 0,
+      "fallback_seller_turn_rate": 0.0,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.14285714285714285,
+      "by_buyer": {
+        "cooperative": 1.0,
+        "stingy": 0.0,
+        "sensitive": 1.0
+      }
+    },
+    "lm": {
+      "deal_success_rate": 0.7333333333333333,
+      "avg_normalized_revenue_all": 0.509971772452153,
+      "avg_price_on_success": 664.5178329033765,
+      "avg_seller_reward": -0.23361560881180216,
+      "avg_turns": 2.933333333333333,
+      "fallback_seller_turns": 0,
+      "fallback_seller_turn_rate": 0.0,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.5,
+      "by_buyer": {
+        "cooperative": 0.4,
+        "stingy": 0.8,
+        "sensitive": 1.0
+      }
+    },
+    "prop": {
+      "deal_success_rate": 0.6666666666666666,
+      "avg_normalized_revenue_all": 0.4901468709005635,
+      "avg_price_on_success": 651.9303199128049,
+      "avg_seller_reward": -1.7651979576610315,
+      "avg_turns": 3.8,
+      "fallback_seller_turns": 0,
+      "fallback_seller_turn_rate": 0.0,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.42105263157894735,
+      "by_buyer": {
+        "cooperative": 0.8,
+        "stingy": 0.8,
+        "sensitive": 0.4
+      }
+    },
+    "cql": {
+      "deal_success_rate": 0.6666666666666666,
+      "avg_normalized_revenue_all": 0.4901468709005635,
+      "avg_price_on_success": 651.9303199128049,
+      "avg_seller_reward": -1.7651979576610315,
+      "avg_turns": 3.6666666666666665,
+      "fallback_seller_turns": 0,
+      "fallback_seller_turn_rate": 0.0,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.43636363636363634,
+      "by_buyer": {
+        "cooperative": 0.8,
+        "stingy": 0.8,
+        "sensitive": 0.4
+      }
+    },
+    "brac": {
+      "deal_success_rate": 0.5333333333333333,
+      "avg_normalized_revenue_all": 0.383,
+      "avg_price_on_success": 788.72,
+      "avg_seller_reward": -5.503333333333333,
+      "avg_turns": 4.6,
+      "fallback_seller_turns": 0,
+      "fallback_seller_turn_rate": 0.0,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.463768115942029,
+      "by_buyer": {
+        "cooperative": 0.2,
+        "stingy": 0.6,
+        "sensitive": 0.8
+      }
+    }
+  }
+}

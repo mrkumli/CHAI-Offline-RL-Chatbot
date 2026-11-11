@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "episodes_per_buyer": 2,
+    "buyer_types": [
+      "cooperative",
+      "stingy",
+      "sensitive"
+    ],
+    "note": "Hand-coded buyer simulator; NOT CHAI paper Table 1"
+  },
+  "policies": {
+    "rule": {
+      "deal_success_rate": 0.6666666666666666,
+      "avg_normalized_revenue_all": 0.5433333333333333,
+      "avg_price_on_success": 85.575,
+      "avg_seller_reward": -1.2333333333333332,
+      "avg_turns": 2.3333333333333335,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.21428571428571427,
+      "by_buyer": {
+        "cooperative": 1.0,
+        "stingy": 0.0,
+        "sensitive": 1.0
+      }
+    },
+    "lm-template": {
+      "deal_success_rate": 1.0,
+      "avg_normalized_revenue_all": 0.65141872118209,
+      "avg_price_on_success": 68.49571652425456,
+      "avg_seller_reward": 6.514187211820899,
+      "avg_turns": 1.0,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 1.0,
+      "by_buyer": {
+        "cooperative": 1.0,
+        "stingy": 1.0,
+        "sensitive": 1.0
+      }
+    },
+    "prop": {
+      "deal_success_rate": 0.8333333333333334,
+      "avg_normalized_revenue_all": 0.5610157203951208,
+      "avg_price_on_success": 69.96324732575593,
+      "avg_seller_reward": 2.276823870617875,
+      "avg_turns": 1.3333333333333333,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.75,
+      "by_buyer": {
+        "cooperative": 0.5,
+        "stingy": 1.0,
+        "sensitive": 1.0
+      }
+    },
+    "cql": {
+      "deal_success_rate": 0.8333333333333334,
+      "avg_normalized_revenue_all": 0.5610157203951208,
+      "avg_price_on_success": 69.96324732575593,
+      "avg_seller_reward": 2.276823870617875,
+      "avg_turns": 1.3333333333333333,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 0.75,
+      "by_buyer": {
+        "cooperative": 0.5,
+        "stingy": 1.0,
+        "sensitive": 1.0
+      }
+    },
+    "brac": {
+      "deal_success_rate": 0.16666666666666666,
+      "avg_normalized_revenue_all": 0.06616504490375519,
+      "avg_price_on_success": 43.668929636478424,
+      "avg_seller_reward": -16.005016217629116,
+      "avg_turns": 1.5,
+      "nonempty_reply_rate": 1.0,
+      "distinct_reply_fraction": 1.0,
+      "by_buyer": {
+        "cooperative": 0.0,
+        "stingy": 0.5,
+        "sensitive": 0.0
+      }
+    }
+  }
+}

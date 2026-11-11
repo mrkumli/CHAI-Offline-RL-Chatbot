@@ -1,0 +1,57 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+data/raw/
+data/fixture_raw/
+data/processed/
+data/fixture_processed/
+checkpoints/*
+!checkpoints/.gitkeep
+results/*
+!results/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Downloaded datasets and processed data
+data/
+!data/
+data/*
+!data/fixture_processed/
+!data/fixture_processed/**
+
+# Trained models / checkpoints
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+
+# Hugging Face cache
+.cache/
+huggingface/
+models--*/
+
+# Evaluation outputs (keep lightweight JSON/CSV)
+results/*
+!results/*.json
+!results/*.csv
+!results/*.md
+
+# Logs and temporary files
+*.log
+*.tmp
