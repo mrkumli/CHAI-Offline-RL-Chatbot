@@ -27,11 +27,11 @@ env/
 Thumbs.db
 
 # Downloaded datasets and processed data
-data/
-!data/
-data/*
-!data/fixture_processed/
-!data/fixture_processed/**
+# data/
+# !data/
+# data/*
+# !data/fixture_processed/
+# !data/fixture_processed/**
 
 # Trained models / checkpoints
 checkpoints/
