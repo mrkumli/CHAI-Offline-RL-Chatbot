@@ -1,7 +1,7 @@
 """CHAI-prop: sample realistic candidate actions and maximize target Q over them."""
 import random
 import torch
-from config import N_REPLIES, N_PRICES
+from config import N_REPLIES, N_PRICES, PRICE_SAMPLE_LOW, PRICE_SAMPLE_HIGH
 from data.preprocess import PRICE_TOKEN
 
 
@@ -10,7 +10,7 @@ def price_proposals(previous_price, count=N_PRICES, sampler=None):
         return [float(sampler()) for _ in range(count)]
     # Paper Sec. 4.1: uniform in 70%-100% of previous offer.
     base = float(previous_price or 1)
-    return [random.uniform(.70 * base, 1.0 * base) for _ in range(count)]
+    return [random.uniform(PRICE_SAMPLE_LOW * base, PRICE_SAMPLE_HIGH * base) for _ in range(count)]
 
 
 def candidates(state, generator, n_replies=N_REPLIES, n_prices=N_PRICES, price_sampler=None):

@@ -7,7 +7,6 @@ import json
 import re
 import urllib.request
 from pathlib import Path
-from typing import Any
 from config import DATA, REJECTION_REWARD, SUCCESS_MULTIPLIER
 
 # These are the original data URLs used by the Stanford dataset loading script.
@@ -17,6 +16,7 @@ SOURCES = {
     'test': 'https://worksheets.codalab.org/rest/bundles/0x54d325bbcfb2463583995725ed8ca42b/contents/blob/',
 }
 PRICE_TOKEN = '[PRICE]'
+ACTION_KINDS = ('message', 'offer', 'accept', 'reject')  # shared with rl/features.py
 MONEY_RE = re.compile(r'(?<!\w)\$\s*\d[\d,]*(?:\.\d+)?')
 
 
@@ -64,7 +64,7 @@ def normalized_event(kind, text, price, list_price):
         if len(amounts) == 1:
             price = clean_price(amounts[0])
     kind = kind.lower().strip()
-    if kind not in ('message', 'offer', 'accept', 'reject'):
+    if kind not in ACTION_KINDS:
         kind = 'message'
     price = clean_price(price)
     if kind == 'offer':

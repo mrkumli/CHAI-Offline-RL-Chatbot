@@ -9,13 +9,13 @@ import re
 from functools import lru_cache
 import numpy as np
 import torch
+from config import FEATURE_DIM, LM_LENGTH
+from data.preprocess import ACTION_KINDS as KINDS
 from models.generator import history_to_prompt
-
-KINDS = ('message', 'offer', 'accept', 'reject')
 
 
 class HashedEncoder:
-    def __init__(self, dim=128):
+    def __init__(self, dim=FEATURE_DIM):
         self.dim = dim
 
     @lru_cache(maxsize=20000)
@@ -38,7 +38,7 @@ class GPT2Encoder:
 
     @lru_cache(maxsize=20000)
     def encode(self, text):
-        inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=256)
+        inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=LM_LENGTH)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         with torch.no_grad():
             outputs = self.model.transformer(**inputs).last_hidden_state

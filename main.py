@@ -1,7 +1,8 @@
 """CLI entrypoint. Run 'python main.py --help' for all demo commands."""
 import argparse
 from pathlib import Path
-from config import DATA, CHECKPOINTS, RESULTS, N_REPLIES, N_PRICES, seed_everything
+from config import (DATA, RAW_DATA, FIXTURE_RAW, FIXTURE_DATA, CHECKPOINTS, RESULTS,
+                    N_REPLIES, N_PRICES, seed_everything)
 from data.preprocess import prepare, download_raw, read_jsonl
 from data.fixture import make_fixture
 from models.generator import GPT2Generator, TemplateGenerator
@@ -20,7 +21,7 @@ def main():
     subs = parser.add_subparsers(dest='cmd', required=True)
     prep = subs.add_parser('prepare', help='Create normalized data and seller RL transitions')
     prep.add_argument('--download', action='store_true', help='Download official CraigslistBargain source')
-    prep.add_argument('--raw-dir', type=Path, default=Path('data/raw'))
+    prep.add_argument('--raw-dir', type=Path, default=RAW_DATA)
     prep.add_argument('--fixture', action='store_true', help='Synthetic toy data ONLY for smoke tests')
     prep.add_argument('--limit', type=int, default=0)
     prep.add_argument('--output', type=Path, default=DATA)
@@ -55,10 +56,10 @@ def main():
     args = parser.parse_args()
     seed_everything()
     if args.cmd == 'prepare':
-        raw = make_fixture(Path('data/fixture_raw')) if args.fixture else (
+        raw = make_fixture(FIXTURE_RAW) if args.fixture else (
             download_raw(args.raw_dir) if args.download else
             {s: args.raw_dir/f'{s}.json' for s in ('train', 'validation', 'test')})
-        output_dir = Path('data/fixture_processed') if args.fixture and args.output == DATA else args.output
+        output_dir = FIXTURE_DATA if args.fixture and args.output == DATA else args.output
         prepare(raw, output_dir, args.limit or None)
         print('Example:', read_jsonl(output_dir/'train_transitions.jsonl')[0])
         print('SOURCE:', 'SYNTHETIC TEST FIXTURE' if args.fixture else 'ORIGINAL CRAIGSLISTBARGAIN')
@@ -74,8 +75,8 @@ def main():
                 max_train=args.max_train, n_replies=args.n_replies, n_prices=args.n_prices)
     elif args.cmd == 'smoke':
         print('IMPORTANT: SYNTHETIC SMOKE TEST. NOT CRAIGSLISTBARGAIN RESULTS.')
-        raw = make_fixture(Path('data/fixture_raw'))
-        fixture_data = Path('data/fixture_processed')
+        raw = make_fixture(FIXTURE_RAW)
+        fixture_data = FIXTURE_DATA
         prepare(raw, fixture_data)
         for method in ('prop', 'cql', 'brac'):
             train_q(method, TemplateGenerator(), episodes=1, max_train=12, n_replies=3, n_prices=3,

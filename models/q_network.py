@@ -1,13 +1,14 @@
-"""Two 256-wide ReLU hidden layers: scalar Q(s,a)."""
+"""Two Q_HIDDEN-wide (256) ReLU hidden layers: scalar Q(s,a)."""
 import torch
 from torch import nn
+from config import Q_HIDDEN
 
 
 class QNetwork(nn.Module):
     def __init__(self, feature_dim):
         super().__init__()
-        self.net = nn.Sequential(nn.Linear(feature_dim, 256), nn.ReLU(),
-                                 nn.Linear(256, 256), nn.ReLU(), nn.Linear(256, 1))
+        self.net = nn.Sequential(nn.Linear(feature_dim, Q_HIDDEN), nn.ReLU(),
+                                 nn.Linear(Q_HIDDEN, Q_HIDDEN), nn.ReLU(), nn.Linear(Q_HIDDEN, 1))
 
     def forward(self, features):
         return self.net(features).squeeze(-1)
