@@ -1,9 +1,7 @@
 """Paired seed-controlled simulated evaluation; does not impersonate human study."""
 import json
-import random
 from pathlib import Path
 from config import RESULTS, SEED, N_REPLIES, N_PRICES, seed_everything
-from data.preprocess import read_jsonl
 from simulation.environment import simulate
 
 

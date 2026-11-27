@@ -1,16 +1,3 @@
-__pycache__/
-.pytest_cache/
-*.pyc
-.venv/
-data/raw/
-data/fixture_raw/
-data/processed/
-data/fixture_processed/
-checkpoints/*
-!checkpoints/.gitkeep
-results/*
-!results/.gitkeep
-
 # Python
 __pycache__/
 *.py[cod]
@@ -26,14 +13,13 @@ env/
 .DS_Store
 Thumbs.db
 
-# Downloaded datasets and processed data
-# data/
-# !data/
-# data/*
-# !data/fixture_processed/
-# !data/fixture_processed/**
+# Datasets: official raw files and processed splits are not redistributed.
+# data/fixture_processed/ is a tiny SYNTHETIC test fixture and stays tracked.
+data/raw/
+data/fixture_raw/
+data/processed/
 
-# Trained models / checkpoints
+# Trained models / checkpoints (record SHA256 hashes instead of committing them)
 checkpoints/
 *.pt
 *.pth
@@ -46,7 +32,7 @@ checkpoints/
 huggingface/
 models--*/
 
-# Evaluation outputs (keep lightweight JSON/CSV)
+# Evaluation outputs (keep lightweight JSON/CSV/MD summaries only)
 results/*
 !results/*.json
 !results/*.csv

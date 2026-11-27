@@ -4,13 +4,12 @@ No environment interactions during training. For the Q bootstrap, the proposal
 set is derived from a fixed language model (or an explicitly labeled fixture
 replacement), not the simulator.
 """
-import json
 import random
 from pathlib import Path
 import torch
 from config import (DATA, CHECKPOINTS, Q_LR, GAMMA, TARGET_TAU, CQL_ALPHA,
-                    BRAC_BETA, seed_everything, device)
-from data.preprocess import read_jsonl
+                    BRAC_BETA, BRAC_PRICE_MIN, BRAC_PRICE_MAX, seed_everything, device)
+from data.preprocess import read_jsonl, PRICE_TOKEN
 from models.q_network import QNetwork, soft_update
 from rl.features import FeatureBuilder, HashedEncoder, GPT2Encoder
 from rl.prop import candidates, prop_target
@@ -71,9 +70,9 @@ def train_q(method, generator, encoder='hashed', episodes=3, max_train=0,
                     # Same LM text proposals, prices sampled from learned price policy.
                     with torch.no_grad():
                         state_vec = torch.tensor(features.state_features(row['next_state']), device=dev).unsqueeze(0)
-                        sampled = actor.distribution(state_vec).sample((len(proposals[i]),)).flatten().clamp(.1, 1.5)
+                        sampled = actor.distribution(state_vec).sample((len(proposals[i]),)).flatten().clamp(BRAC_PRICE_MIN, BRAC_PRICE_MAX)
                     next_actions = [dict(a, price=float(sampled[j])) if a['kind'] == 'offer'
-                                    or '[PRICE]' in a['text'] else a for j, a in enumerate(proposals[i])]
+                                    or PRICE_TOKEN in a['text'] else a for j, a in enumerate(proposals[i])]
                 else:
                     next_actions = proposals[i]
                 with torch.no_grad():
@@ -97,7 +96,7 @@ def train_q(method, generator, encoder='hashed', episodes=3, max_train=0,
                 # Keep Q frozen during actor update, but differentiate Q wrt price.
                 state_vec = torch.tensor(features.state_features(row['state']), device=dev).unsqueeze(0)
                 dist = actor.distribution(state_vec)
-                sampled_price = dist.rsample().clamp(.1, 1.5)
+                sampled_price = dist.rsample().clamp(BRAC_PRICE_MIN, BRAC_PRICE_MAX)
                 q_in = features.pairs(row['state'], [row['action']]).to(dev).detach()
                 # Action price is immediately after the action text embedding.
                 price_index = 2 * features.encoder.dim + 5
@@ -150,7 +149,7 @@ class QAgent:
             state_vec = torch.from_numpy(self.features.state_features(state)).unsqueeze(0)
             def price_sampler():
                 with torch.no_grad():
-                    return float(self.actor.distribution(state_vec).sample().clamp(.1, 1.5)[0])
+                    return float(self.actor.distribution(state_vec).sample().clamp(BRAC_PRICE_MIN, BRAC_PRICE_MAX)[0])
         opts = candidates(state, self.generator, n_replies, n_prices, price_sampler)
         with torch.no_grad():
             values = self.q(self.features.pairs(state, opts))
