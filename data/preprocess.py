@@ -7,7 +7,7 @@ import json
 import re
 import urllib.request
 from pathlib import Path
-from config import DATA, REJECTION_REWARD, SUCCESS_MULTIPLIER
+from config import DATA, REJECTION_REWARD, SUCCESS_MULTIPLIER, MAX_PRICE_RATIO
 
 # These are the original data URLs used by the Stanford dataset loading script.
 SOURCES = {
@@ -42,15 +42,25 @@ def clean_price(number):
         return None
 
 
+def as_text(value):
+    """Raw Cocoa descriptions are lists of lines; join them instead of printing "['...']"."""
+    if isinstance(value, list):
+        return ' '.join(str(part).strip() for part in value if str(part).strip())
+    return str(value or '')
+
+
 def mask_prices(text: str, offered_price=None):
     """Mask explicit currency, plus a naked number ONLY when metadata confirms it."""
     text = MONEY_RE.sub(PRICE_TOKEN, str(text))
     if offered_price is not None:
         value = float(offered_price)
         if value.is_integer():
-            variants = [str(int(value)), f'{value:.2f}']
+            # '2800', '2800.00' and the comma-grouped forms '2,800', '2,800.00'
+            variants = [str(int(value)), f'{value:.2f}', f'{value:,.0f}', f'{value:,.2f}']
         else:
-            variants = [str(value), f'{value:.2f}']
+            variants = [str(value), f'{value:.2f}', f'{value:,.2f}']
+        # Longest first, so '2,800.00' is masked before its shorter prefix '2,800'.
+        variants = sorted(set(variants), key=len, reverse=True)
         for variant in variants:
             text = re.sub(r'(?<![\w.])' + re.escape(variant) + r'(?![\w.])', PRICE_TOKEN, text)
     return text.strip()
@@ -105,10 +115,14 @@ def from_cocoa(raw):
         price = extracted if extracted is not None else annotated
         if kind == 'offer' and not price:
             continue
+        if kind == 'message' and not text.strip():
+            # Raw 'quit' events (data=None) would otherwise become EMPTY seller
+            # targets and teach GPT-2 to output only end-of-text.
+            continue
         event = normalized_event(kind, text, price, list_price)
         event['role'] = 'seller' if e['agent'] == seller_id else 'buyer'
         events.append(event)
-    return {'title': str(item.get('Title', '')), 'description': str(item.get('Description', ''))[:500],
+    return {'title': str(item.get('Title', '')), 'description': as_text(item.get('Description'))[:500],
             'category': str(item.get('Category', '')), 'list_price': list_price, 'events': events}
 
 
@@ -135,10 +149,12 @@ def from_hf(row):
         offered = clean_price(prices[i]) if i < len(prices) else None
         if kind == 'offer' and not offered:
             continue
+        if kind == 'message' and not str(text or '').strip():
+            continue  # empty utterance: nothing for GPT-2 to learn
         event = normalized_event(kind, text, offered, price)
         event['role'] = 'seller' if agent == seller_id else 'buyer'
         events.append(event)
-    return {'title': str(item.get('Title', '')), 'description': str(item.get('Description', ''))[:500],
+    return {'title': str(item.get('Title', '')), 'description': as_text(item.get('Description'))[:500],
             'category': str(item.get('Category', '')), 'list_price': price, 'events': events}
 
 
@@ -147,6 +163,12 @@ def get_dataset(filename: Path):
     if not isinstance(raw, list):
         raise ValueError(f'Expected a JSON array in {filename}')
     return [e for row in raw if (e := (from_cocoa(row) if 'scenario' in row else from_hf(row))) is not None]
+
+
+def has_malformed_price(dialogue, max_ratio=MAX_PRICE_RATIO):
+    """True if any price is above max_ratio x list price (e.g. a typo such as $275,000
+    for a $2,150 rental). Such dialogues give absurd rewards (10 x 127.9 = 1279)."""
+    return any(e['price'] is not None and e['price'] > max_ratio for e in dialogue['events'])
 
 
 def transitions_for_dialogue(dialogue, dialogue_id):
@@ -206,6 +228,10 @@ def prepare(sources, output=DATA, limit=None):
     for split in ('train', 'validation', 'test'):
         path = sources[split]
         dialogues = get_dataset(path)
+        malformed = sum(has_malformed_price(d) for d in dialogues)
+        dialogues = [d for d in dialogues if not has_malformed_price(d)]
+        if malformed:
+            print(f'{split}: skipped {malformed} dialogues with a price > {MAX_PRICE_RATIO}x list price')
         if limit:
             dialogues = dialogues[:limit]
         for i, dialogue in enumerate(dialogues):

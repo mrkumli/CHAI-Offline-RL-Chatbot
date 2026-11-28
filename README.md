@@ -93,3 +93,12 @@ python main.py evaluate --backend gpt2 --episodes 5 --n-replies 5 --n-prices 5
 ```
 
 The repository tests mock generation and use lightweight fixture models. They do not confirm how *your particular saved GPT-2 weights* behave; examine the console warnings and JSON fallback counts from an actual GPT-2 evaluation.
+
+## Phase 2 data and generation fixes (November 2026)
+
+Checked against the real CraigslistBargain source files and the existing fine-tuned GPT-2 checkpoint (no retraining):
+
+- **Prompt truncation (inference):** `GPT2Generator.sample` now keeps the **last** `LM_LENGTH - LM_MAX_NEW_TOKENS` prompt tokens, as training does. The tokenizer's default truncation cut the *end* of 15–18% of prompts (those over 256 tokens), so GPT-2 continued a buyer sentence mid-word ("think.", "'d be willing").
+- **Control-word variants:** `accept :)`, `acceptoffer`, `Accepted!` and `accepts the price` are now recognized as the same control action instead of new "messages" (see `response_type`).
+- **Data parsing (`prepare`):** raw `quit` events no longer become empty seller targets (256 in the full train split); item descriptions are joined text, not Python list syntax; comma prices such as `2,800` are masked when metadata confirms them; dialogues with a price above `MAX_PRICE_RATIO` (3x list) are skipped and counted (55 train / 7 validation / 6 test). These dialogues produced rewards up to 1279.
+- **Not re-run:** `data/processed/` and all checkpoints were built *before* these fixes and were left untouched. Re-running `prepare` will change the processed files; retrain the generator and critics only together, on the same new data.

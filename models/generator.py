@@ -1,7 +1,9 @@
 """GPT-2 dialogue model; TemplateGenerator exists only for offline smoke tests."""
 import random
+import re
 import warnings
-from config import LM_LENGTH, LM_SAMPLE_ATTEMPTS
+from pathlib import Path
+from config import LM_LENGTH, LM_SAMPLE_ATTEMPTS, LM_MAX_NEW_TOKENS
 from data.preprocess import PRICE_TOKEN
 
 
@@ -19,6 +21,16 @@ def history_to_prompt(state):
     return '\n'.join(lines) + '\nSeller:'
 
 
+# A reply made ONLY of control words, e.g. 'accept', 'accepted', 'accept :)',
+# 'acceptoffer', 'accept accept'. GPT-2 sometimes skips end-of-text after a control
+# word; these variants all mean the same action and must not count as new messages.
+CONTROL_ONLY = re.compile(r'^((accept|reject|offer)(ed|s|ing|or)?)+$')
+# Training targets write control actions as the bare lowercase word. A reply that
+# STARTS with that word ('accept Thank you', 'offer, good luck') is the control action
+# plus run-on text (only 6 of 19,131 real seller messages start this way).
+CONTROL_RUN_ON = re.compile(r'^(accept|reject|offer)(ed|s|ing)?\b')
+
+
 def response_type(text):
     head = text.strip().lower().strip(' .!')
     # Entire single-word commands only. Avoid "I accept..." being mistaken for a control action.
@@ -28,6 +40,12 @@ def response_type(text):
         return 'reject'
     if head.startswith('offer') and len(head.split()) <= 2:
         return 'offer'
+    run_on = CONTROL_RUN_ON.match(text.strip())  # case-sensitive on purpose
+    if run_on:
+        return run_on.group(1)
+    letters = re.sub(r'[^a-z]', '', head)  # 'Accepted!' -> 'accepted'
+    if letters and CONTROL_ONLY.match(letters):
+        return re.match(r'accept|reject|offer', letters).group(0)
     return 'message'
 
 
@@ -52,6 +70,10 @@ class GPT2Generator:
             raise RuntimeError('GPT-2 needs transformers. Run pip install -r requirements.txt') from exc
         self.torch = torch
         self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
+        if not Path(checkpoint).exists():
+            # Otherwise transformers treats the path as a Hub model name and raises a
+            # confusing HFValidationError instead of this message.
+            raise RuntimeError(f'Missing GPT-2 model/checkpoint {checkpoint}. Train with train-lm first.')
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(str(checkpoint))
             self.model = AutoModelForCausalLM.from_pretrained(str(checkpoint)).to(self.device).eval()
@@ -75,8 +97,12 @@ class GPT2Generator:
         # Training uses `history_to_prompt(state) + ' '` before the target text.
         # Do NOT change history_to_prompt itself: saved Q encoders use its exact text.
         prompt = history_to_prompt(state) + ' '
-        inputs = self.tokenizer(prompt, return_tensors='pt', truncation=True, max_length=LM_LENGTH)
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        encoded = self.tokenizer(prompt, return_tensors='pt')
+        # Keep the END of long prompts (newest turns + the 'Seller: ' cue), exactly as
+        # train_generator.py does with context[-n:]. The tokenizer's own truncation
+        # cuts the END instead, so GPT-2 then continued a buyer sentence mid-word.
+        keep = LM_LENGTH - LM_MAX_NEW_TOKENS
+        inputs = {k: v[:, -keep:].to(self.device) for k, v in encoded.items()}
         prefix_len = inputs['input_ids'].shape[1]
         unique = {}
         empty_count = 0
@@ -92,7 +118,7 @@ class GPT2Generator:
             with self.torch.no_grad():
                 outputs = self.model.generate(
                     **inputs, do_sample=True, top_p=top_p, temperature=temperature,
-                    min_new_tokens=2, max_new_tokens=32,
+                    min_new_tokens=2, max_new_tokens=LM_MAX_NEW_TOKENS,
                     num_return_sequences=missing,
                     pad_token_id=self.tokenizer.eos_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
